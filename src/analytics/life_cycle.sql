@@ -47,8 +47,8 @@ tb_life_cycle as(
                 WHEN qtdeDiasPrimeiraTransacao <= 7 THEN '01-CURIOSO'
                 WHEN qtdeDiasUltimaTransacao <= 7 AND qtdeDiasPenultimaTransacao - qtdeDiasUltimaTransacao <=  14 THEN '02-FIEL'
                 WHEN qtdeDiasUltimaTransacao BETWEEN 8 AND 14 THEN '03-TURISTA'
-                WHEN qtdeDiasUltimaTransacao BETWEEN 15 AND 27 THEN '04-DESENCANTADA'
-                WHEN qtdeDiasUltimaTransacao >= 28 THEN '05-ZUMBI'
+                WHEN qtdeDiasUltimaTransacao BETWEEN 15 AND 28 THEN '04-DESENCANTADA'
+                WHEN qtdeDiasUltimaTransacao > 28 THEN '05-ZUMBI'
                 WHEN qtdeDiasUltimaTransacao <= 7 AND qtdeDiasPenultimaTransacao - qtdeDiasUltimaTransacao BETWEEN 15 AND 27 THEN '02-RECONQUISTADO'
                 WHEN qtdeDiasUltimaTransacao <= 7 AND qtdeDiasPenultimaTransacao - qtdeDiasUltimaTransacao > 28 THEN '02-REBORN'
 
@@ -58,9 +58,45 @@ tb_life_cycle as(
     FROM    tb_idade AS t1
     LEFT JOIN tb_penultima_ativacao AS t2
     ON t1.idCliente = t2.idCliente
+),
+
+tb_freq_valor AS (
+
+    SELECT  IdCliente,
+            count(DISTINCT substr(DtCriacao, 0, 11)) as qtdeFrequencia,
+            sum(CASE WHEN QtdePontos > 0 THEN qtdePontos ELSE 0 END) AS qtdePontosPos
+            -- sum(abs(QtdePontos)) as QtdePontosAbs
+
+    FROM transacoes
+
+    WHERE date(DtCriacao) < '{date}'
+    AND DtCriacao >= date('{date}',  '-28 days') 
+
+    GROUP BY IdCliente
+    ORDER BY qtdeFrequencia DESC
+),
+
+tb_cluster AS(
+    SELECT  *,
+            CASE
+                WHEN qtdeFrequencia <= 10 AND qtdePontosPos >= 1500 THEN '12-HYPER'
+                WHEN qtdeFrequencia > 10 AND qtdePontosPos >= 1500 THEN '22-EFICIENTE'
+                WHEN qtdeFrequencia <= 10 AND qtdePontosPos >= 750 THEN '11-INDECISO'
+                WHEN qtdeFrequencia > 10 AND qtdePontosPos >= 750 THEN '21-ESFORÇADO'
+                WHEN qtdeFrequencia < 5 THEN '00-LURKER'
+                WHEN qtdeFrequencia <= 10 THEN '01-PREGUIÇOSO'
+                WHEN qtdeFrequencia > 10 THEN '20-POTENCIAL' 
+
+            END AS cluster
+
+    FROM tb_freq_valor
 )
 
-SELECT  date("{date}", "-1 day") as DtRef,
-        *
-FROM    tb_life_cycle
-
+SELECT  date('{date}', '-1 day') AS dtRef,
+        t1.*,
+        t2.qtdeFrequencia,
+        t2.qtdePontosPos,
+        t2.cluster
+FROM tb_life_cycle AS t1
+LEFT JOIN tb_cluster AS t2
+ON t1.IdCliente =  t2.IdCliente
