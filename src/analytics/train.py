@@ -143,8 +143,21 @@ model = ensemble.RandomForestClassifier(
     random_state=42,
     n_estimators=100,
     min_samples_leaf=50,
+    n_jobs=2,
 )
 
+params = {
+    "n_estimators": [100,200,300,400,500,1000],
+    "min_samples_leaf": [10,20,30,50,75,100],
+}
+
+grid = model_selection.GridSearchCV(model,
+                                    param_grid=params,
+                                    cv=3,
+                                    scoring="roc_auc",
+                                    refit=True,
+                                    verbose=3,
+                                    n_jobs=10)
 # %%
 # CRIANDO PIPELINE
 
@@ -158,8 +171,9 @@ with mlflow.start_run() as r:
         ('Imputação de Não-Usuario', imput_new),
         ('Imputação de 1000', imput_1000),
         ('OneHot Enconding', onehot),
-        ('Algoritmo', model),
+        ('Algoritmo', grid),
     ])
+
 
     model_pipeline.fit(X_train, y_train)
 
