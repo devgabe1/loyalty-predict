@@ -87,8 +87,8 @@ SELECT t1.*,
        t2.qtePresencaStreak,
        t2.qteTrocaStreamElements,
        t2.qteReembolsoStreamElements,
-       t2.qtdeRPG,
-       t2.qtdeChurnModel,
+       t2.qteRPG,
+       t2.qteChurnModel,
        t3.qtdeFrequencia,
        t3.descLifeCycleAtual,
        t3.descLifeCycleD28,
@@ -126,7 +126,7 @@ SELECT t1.*,
         t4.streamlit2025,
         t4.tramparLakehouse2024,
         t4.tseAnalytics2024,
-        t4.qtdDiasUltiAtividade
+        t4.qtdDiasUltimaAtividade
 
 FROM tb_cohort AS t1
 
